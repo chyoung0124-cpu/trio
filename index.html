@@ -190,7 +190,7 @@ function drawAI(){var r=rt/100,a1=r<=0.5?1:1-(r-0.5)*2,a2=r>=0.5?1:r*2;document.
 function setupC(c,w,h){c.width=Math.round(w*DPR);c.height=Math.round(h*DPR);c.style.width=w+'px';c.style.height=h+'px';var ctx=c.getContext('2d');ctx.scale(DPR,DPR);return ctx;}
 function drawWave(ctx,idx,w,h){ctx.clearRect(0,0,w,h);var mid=h/2,amp=mid-2;ctx.strokeStyle=idx===0?'#fff':(idx===sel?'#bbb':'#333');ctx.lineWidth=1/DPR;ctx.beginPath();var r=rt/100,p3=0,p2=0,p1=0;for(var x=0;x<w;x++){var t=x/w;var s3=Math.sin(2*Math.PI*rV(ops[2])*t+p3*(ops[2].f/64)*Math.PI);p3=s3;var s2=Math.sin(2*Math.PI*rV(ops[1])*t+s3*(ops[2].l/127)*r*3+p2*(ops[1].f/64)*Math.PI);p2=s2;var s1=Math.sin(2*Math.PI*rV(ops[0])*t+s2*(ops[1].l/127)*3+(1-r)*s3*(ops[2].l/127)*3+Math.atan(p1*(ops[0].f/64)*2.5));p1=s1;var v=[s1,s2,s3][idx];/* Scale visual amplitude by this OP's level so adjusting Level is visible */var lvAmp=amp*(ops[idx].l/127);x===0?ctx.moveTo(x,mid-v*lvAmp):ctx.lineTo(x,mid-v*lvAmp);}ctx.stroke();}
 function drawWaves(){for(var i=0;i<3;i++){var c=document.getElementById('c'+i);if(!c)continue;var ww=document.getElementById('row'+i).querySelector('.op-wave');var cW=ww.offsetWidth||200,cH=ww.offsetHeight||20;if(cH<4)cH=20;var ctx=setupC(c,cW,cH);drawWave(ctx,i,cW,cH);}}
-function drawEnv(){var panel=document.getElementById('ep'),c=document.getElementById('ec');if(!panel||!c)return;var pW=panel.offsetWidth,pH=panel.offsetHeight;if(!pW||!pH){pW=300;pH=150;}c.style.left='0px';c.style.top='0px';var ctx=setupC(c,pW,pH);ctx.clearRect(0,0,pW,pH);var o=ops[sel],px=10,pt=10,pb=12,uw=pW-px*2,uh=pH-pt-pb;var eH=Math.round(uh*0.5),eT=pt+Math.round((uh-eH)/2),eB=eT+eH;var aZ=uw*0.75,rZ=uw*0.25,aT=o.atk+o.dec+60;var aw=o.atk/aT*aZ,dw=Math.max(6,o.dec/aT*aZ),rw=(o.rel/100)*rZ;var sL=0.15+(o.sus/100)*0.70,sy=eB-Math.round(eH*sL),x0=px,sX=px+aZ;var pts=[[x0,eB],[x0+aw,eT],[x0+aw+dw,sy],[sX,sy],[sX+rw,eB]];ctx.fillStyle='#111';ctx.beginPath();pts.forEach(function(p,i){i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);});ctx.lineTo(pts[4][0],eB);ctx.lineTo(x0,eB);ctx.closePath();ctx.fill();[[0,1],[1,2],[2,3],[3,4]].forEach(function(s,i){var hi=(curP===i+1);ctx.strokeStyle=hi?'#fff':'#666';ctx.lineWidth=hi?1.5/DPR:1/DPR;ctx.beginPath();ctx.moveTo(pts[s[0]][0],pts[s[0]][1]);ctx.lineTo(pts[s[1]][0],pts[s[1]][1]);ctx.stroke();});pts.forEach(function(p){ctx.fillStyle='#fff';ctx.fillRect(p[0]-2,p[1]-2,4,4);});var lY=pH-3,sW=uw/4;ctx.font='6px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';['A','D','S','R'].forEach(function(l,i){ctx.fillStyle=(curP===i+1)?'#fff':'#444';ctx.fillText(l,px+sW*i+sW/2,lY);});}
+function drawEnv(){var panel=document.getElementById('ep'),c=document.getElementById('ec');if(!panel||!c)return;var pW=panel.offsetWidth,pH=panel.offsetHeight;if(!pW||!pH){pW=300;pH=150;}c.style.left='0px';c.style.top='0px';var ctx=setupC(c,pW,pH);ctx.clearRect(0,0,pW,pH);var o=ops[sel],px=10,pt=10,pb=12,uw=pW-px*2,uh=pH-pt-pb;var eH=Math.round(uh*0.5),eT=pt+Math.round((uh-eH)/2),eB=eT+eH;var aZ=uw*0.75,rZ=uw*0.25,aT=o.atk+o.dec+60;var aw=o.atk/aT*aZ,dw=Math.max(6,o.dec/aT*aZ),rw=(o.rel/100)*rZ;var sL=0.15+(o.sus/100)*0.70,sy=eB-Math.round(eH*sL),x0=px,sX=px+aZ;var pts=[[x0,eB],[x0+aw,eT],[x0+aw+dw,sy],[sX,sy],[sX+rw,eB]];ctx.fillStyle='#111';ctx.beginPath();pts.forEach(function(p,i){i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);});ctx.lineTo(pts[4][0],eB);ctx.lineTo(x0,eB);ctx.closePath();ctx.fill();[[0,1],[1,2],[2,3],[3,4]].forEach(function(s,i){var hi=(curP===i);ctx.strokeStyle=hi?'#fff':'#666';ctx.lineWidth=hi?1.5/DPR:1/DPR;ctx.beginPath();ctx.moveTo(pts[s[0]][0],pts[s[0]][1]);ctx.lineTo(pts[s[1]][0],pts[s[1]][1]);ctx.stroke();});pts.forEach(function(p){ctx.fillStyle='#fff';ctx.fillRect(p[0]-2,p[1]-2,4,4);});var lY=pH-3,sW=uw/4;ctx.font='6px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';['A','D','S','R'].forEach(function(l,i){ctx.fillStyle=(curP===i)?'#fff':'#444';ctx.fillText(l,px+sW*i+sW/2,lY);});}
 function updSq(){for(var i=0;i<3;i++){document.getElementById('fr'+i).style.height=Math.round(ops[i].r/80*100)+'%';document.getElementById('vr'+i).textContent=fR(ops[i]);document.getElementById('ff'+i).style.height=Math.round(ops[i].f/64*100)+'%';document.getElementById('vf'+i).textContent=ops[i].f;}updateBNote();}
 function setRt(v){rt=Math.max(0,Math.min(100,v));document.getElementById('rpip').style.left='calc('+rt+'% - 1px)';document.getElementById('rtval').textContent=rt;drawAI();drawWaves();updateBNote();}
 function hlOp(i){sel=i;for(var j=0;j<3;j++){var on=j===i;document.getElementById('row'+j).className='oprow'+(on?' sel':'');document.getElementById('tag'+j).style.color=on?'#fff':'#444';['r','f'].forEach(function(t){document.getElementById('s'+t+j).style.borderColor=on?'#888':'#444';document.getElementById('f'+t+j).style.background=on?'#333':'#222';document.getElementById('v'+t+j).style.color=on?'#fff':'#666';document.getElementById('l'+t+j).style.color=on?'#aaa':'#555';});}drawWaves();}
@@ -566,7 +566,7 @@ function fmOff(n){
 
 /* B button: hold on pg1 = audition note (A3=220Hz, release triggers envelope release) */
 bHold('bB',
-  function(){if(pg===1){bNote=fmOn(pitchFreq());}},
+  function(){if(pg===1){fmOff(bNote);bNote=fmOn(pitchFreq());}},
   function(){
     if(pg===1){fmOff(bNote);bNote=null;}
     else if(pg===2){showPg(1);}
@@ -627,6 +627,8 @@ document.addEventListener('keydown',function(ev){
     ev.preventDefault();
     if(k==='z'){pianoOct=Math.max(1,pianoOct-1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
     if(k==='x'){pianoOct=Math.min(7,pianoOct+1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
+    if(k===' '){/* space = random even in piano mode */
+      for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;}updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');return;}
     if(PMAP[k]!==undefined&&!pianoActive[k]){pianoActive[k]=fmOn(pFreq(PMAP[k],pianoOct));}
     return;
   }
@@ -667,7 +669,7 @@ document.addEventListener('keydown',function(ev){
       break;
     case'x': /* B button — hold in pg1 plays at current pitch */
       flash('bB');
-      if(pg===1){bNote=fmOn(pitchFreq());}
+      if(pg===1){fmOff(bNote);bNote=fmOn(pitchFreq());}
       else if(pg===2){showPg(1);}
       else if(pg===3){mact('b');}
       break;
