@@ -202,7 +202,8 @@ function renderTheremin(el){
   });
   if(!menuActive)hint('A ENTER   B EXIT');
   else hint(thereminSel===0?'L/R: SCALE   ↑↓ SELECT   B BACK':'L/R: ROOT   ↑↓ SELECT   B BACK');
-}var rows=[['APP','TRIO'],['VERSION','0.1.0'],['AUTHOR','YEUNG'],['BUILD','2026'],['PLATFORM','TRIMUI BRICK'],['ENGINE','3-OP FM'],['RESET ALL','⚠']];rows.forEach(function(row,i){var d=document.createElement('div');d.className='mr'+(menuActive&&i===aboutSel?' mra':'')+(i===6?' rst':'');d.innerHTML='<span class="mrl">'+row[0]+'</span><span class="mrv sm">'+row[1]+'</span>';el.appendChild(d);});hint(menuActive?(aboutSel===6?'A CONFIRM RESET   B BACK':'↑↓ SELECT   B BACK'):'A ENTER   B EXIT');}
+}
+function renderAbout(el){var rows=[['APP','TRIO'],['VERSION','0.1.0'],['AUTHOR','YEUNG'],['BUILD','2026'],['PLATFORM','TRIMUI BRICK'],['ENGINE','3-OP FM'],['RESET ALL','⚠']];rows.forEach(function(row,i){var d=document.createElement('div');d.className='mr'+(menuActive&&i===aboutSel?' mra':'')+(i===6?' rst':'');d.innerHTML='<span class="mrl">'+row[0]+'</span><span class="mrv sm">'+row[1]+'</span>';el.appendChild(d);});hint(menuActive?(aboutSel===6?'A CONFIRM RESET   B BACK':'↑↓ SELECT   B BACK'):'A ENTER   B EXIT');}
 function renderNed(el){var ci=nedTarget.ci,si=nedTarget.si;var wrap=document.createElement('div');wrap.className='ned-wrap';var tit=document.createElement('div');tit.className='ned-tit';tit.textContent=(nedTarget.mode==='rename'?'RENAME → ':'SAVE → ')+CATS[ci]+' '+(si+1<10?'0'+(si+1):si+1);wrap.appendChild(tit);var nd=document.createElement('div');nd.className='ned-disp';var nm=(nedText+'        ').substring(0,8);for(var i=0;i<8;i++){var sp=document.createElement('div');sp.className='nec'+(i===nedCur?' nc':(nm[i]!==' '?' nf':''));sp.textContent=nm[i]===' '?'_':nm[i];nd.appendChild(sp);}wrap.appendChild(nd);var kg=document.createElement('div');kg.className='kbwrap';KB.forEach(function(row,ri){var rr=document.createElement('div');rr.className='kbr';row.forEach(function(ch,ci2){var k=document.createElement('div');k.className='kbk'+(ri===kbR&&ci2===kbC?' ks':'')+(ch==='DEL'||ch==='OK'?' wide':'');k.textContent=ch===' '?'SP':ch;rr.appendChild(k);});kg.appendChild(rr);});wrap.appendChild(kg);el.appendChild(wrap);hint('↑↓←→ KB   L/R CURSOR   A INSERT   B CONFIRM');}
 function nedCommit(){var name=(nedText.trim()||'UNTITLED').substring(0,8).toUpperCase();var sl=pLib[nedTarget.ci][nedTarget.si];sl.name=name;if(nedTarget.mode==='save'){sl.ops=ops.map(function(o){return Object.assign({},o);});sl.rt=rt;sl.saved=true;sl.preset=false;curPatchName=name;document.getElementById('pnm').textContent=name;}nedMode=false;renderMenu();}
 function saveSlot(ci,si){var sl=pLib[ci][si];if(sl.saved&&sl.name!=='UNTITLED'){sl.ops=ops.map(function(o){return Object.assign({},o);});sl.rt=rt;sl.preset=false;curPatchName=sl.name;document.getElementById('pnm').textContent=sl.name;setMsg('SAVED → '+sl.name);renderMenu();}else{nedTarget={ci:ci,si:si,mode:'save'};nedText='';nedCur=0;kbR=0;kbC=0;nedMode=true;renderMenu();}}
@@ -230,9 +231,13 @@ else if(menuSec===2){
   else if(a==='L'||a==='le'){
     if(thereminSel===0){scaleIdx=(scaleIdx-1+SCALES.length)%SCALES.length;}
     else{rootSemi=(rootSemi-1+12)%12;}
+    _scaleMapCache=null;
+    if(scaleIdx!==0){var m=getScaleMap();pitchStep=nearestStepIdx(m,pitchCents);}
   }else if(a==='R'||a==='ri'){
     if(thereminSel===0){scaleIdx=(scaleIdx+1)%SCALES.length;}
     else{rootSemi=(rootSemi+1)%12;}
+    _scaleMapCache=null;
+    if(scaleIdx!==0){var m=getScaleMap();pitchStep=nearestStepIdx(m,pitchCents);}
   }else if(a==='b'){menuActive=false;thereminSel=0;}
 }
 else{if(a==='up')aboutSel=Math.max(0,aboutSel-1);else if(a==='dn')aboutSel=Math.min(6,aboutSel+1);else if(a==='a'&&aboutSel===6){midiCh=1;pLib=initLib();catOpen=CATS.map(function(){return false;});ops=[{r:10,l:80,f:0,atk:10,dec:30,sus:60,rel:40,label:'CARRIER'},{r:20,l:64,f:12,atk:5,dec:50,sus:40,rel:60,label:'MOD'},{r:30,l:45,f:0,atk:20,dec:20,sus:80,rel:30,label:'MOD'}];rt=50;updSq();setRt(50);drawWaves();curPatchName='UNTITLED';document.getElementById('pnm').textContent='UNTITLED';updateMidiStatus();aboutSel=0;}else if(a==='b')menuActive=false;}}
@@ -328,25 +333,18 @@ var ROOT_NAMES=['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
 var scaleIdx=0,rootSemi=0,pitchStep=0;
 
 /* Build array of cent values for all scale degrees across range */
+var _scaleMapCache=null,_scaleMapKey='';
 function buildScaleMap(){
-  if(scaleIdx===0)return null; /* chromatic = free */
-  var s=SCALES[scaleIdx].steps,map=[],c=rootSemi*100;
-  /* go down from root until below PT_MIN */
-  var tmp=c;while(tmp>PT_MIN){var si=((s.length-(0))%s.length);tmp-=s[((s.length)%s.length)];} 
-  /* rebuild properly */
-  map=[];
-  /* find lowest root multiple below PT_MIN */
-  var octSteps=s.reduce(function(a,b){return a+b;},0); /* cents per octave = 1200 */
+  if(scaleIdx===0)return null;
+  var key=scaleIdx+'-'+rootSemi;
+  if(_scaleMapKey===key&&_scaleMapCache)return _scaleMapCache;
+  var s=SCALES[scaleIdx].steps,map=[];
   var startC=rootSemi*100;
   while(startC>PT_MIN)startC-=1200;
-  /* now walk up adding scale steps */
-  var pos=startC;
-  var si2=0;
-  while(pos<=PT_MAX+1200){
-    map.push(Math.round(pos));
-    pos+=s[si2%s.length];
-    si2++;
-  }
+  var pos=startC,si=0;
+  /* multiply each step by 100: steps are in semitones, pos is in cents */
+  while(pos<=PT_MAX){map.push(Math.round(pos));pos+=s[si%s.length]*100;si++;}
+  _scaleMapCache=map;_scaleMapKey=key;
   return map;
 }
 function getScaleMap(){return buildScaleMap();}
@@ -358,13 +356,12 @@ function nearestStepIdx(map,cents){
   return best;
 }
 
-/* Move pitch by delta scale steps */
+/* Move pitch by delta scale steps — uses pitchStep as index directly */
 function movePitchByScale(dir){
-  if(scaleIdx===0){return false;} /* use old cent logic */
+  if(scaleIdx===0){return false;}
   var map=getScaleMap();
-  pitchStep=nearestStepIdx(map,pitchCents)+dir;
-  pitchStep=Math.max(0,Math.min(map.length-1,pitchStep));
-  pitchCents=Math.max(PT_MIN,Math.min(PT_MAX,map[pitchStep]));
+  pitchStep=Math.max(0,Math.min(map.length-1,pitchStep+dir));
+  pitchCents=map[pitchStep];
   return true;
 }
 function updateScaleDisplay(){
@@ -382,6 +379,7 @@ function cycleScale(){
   setMsg(SCALES[scaleIdx].name);
 }
 
+function pitchFreq(){return 220*Math.pow(2,pitchCents/1200);}
 function pitchLabel(){
   /* nearest semitone index and cents offset within that semitone */
   var semi=Math.round(pitchCents/100);
@@ -414,17 +412,18 @@ function updatePitchSlider(){
     bNote.g21.gain.value=(ops[1].l/127)*D;
   }
 }
-/* Pitch repeat: scale-aware, linear cents when chromatic */
+/* Pitch repeat: scale-aware, with proper acceleration */
 function makePtRepeat(dir){
-  var t1=null,t2=null,held_ms=0,tick=80;
+  var t1=null,t2=null,held_ms=0,tick=60;
   function step(){
     held_ms+=tick;
     if(scaleIdx!==0){
-      /* scale mode: move one step per tick, accelerate after 600ms */
-      var skip=held_ms>600?2:1;
+      /* scale mode: steps per tick increases with hold time */
+      var skip=held_ms<400?1:held_ms<900?2:held_ms<1500?3:5;
       for(var i=0;i<skip;i++)movePitchByScale(dir);
     }else{
-      var speed=30+Math.min(120,Math.floor(held_ms/400)*30);
+      /* chromatic: continuous cents with acceleration */
+      var speed=50+Math.min(200,Math.floor(held_ms/300)*50);
       pitchCents=Math.max(PT_MIN,Math.min(PT_MAX,pitchCents+dir*speed));
     }
     updatePitchSlider();
@@ -433,9 +432,9 @@ function makePtRepeat(dir){
   function start(){
     held_ms=0;
     if(scaleIdx!==0){movePitchByScale(dir);}
-    else{pitchCents=Math.max(PT_MIN,Math.min(PT_MAX,pitchCents+dir*30));}
+    else{pitchCents=Math.max(PT_MIN,Math.min(PT_MAX,pitchCents+dir*50));}
     updatePitchSlider();
-    t1=setTimeout(step,300);
+    t1=setTimeout(step,250);
   }
   function stop(){clearTimeout(t1);clearTimeout(t2);t1=t2=null;held_ms=0;}
   return{start:start,stop:stop};
