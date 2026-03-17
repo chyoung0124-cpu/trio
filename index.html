@@ -617,7 +617,13 @@ document.addEventListener('keydown',function(ev){
   /* Mode toggle */
   if(k==='`'){
     pianoMode=!pianoMode;
-    if(!pianoMode){for(var pk in pianoActive){fmOff(pianoActive[pk]);delete pianoActive[pk];}}
+    if(pianoMode){
+      /* entering piano: stop any active bNote */
+      fmOff(bNote);bNote=null;
+    }else{
+      /* leaving piano: stop all active piano notes */
+      for(var pk in pianoActive){fmOff(pianoActive[pk]);delete pianoActive[pk];}
+    }
     setMsg(pianoMode?'[PIANO OCT:'+pianoOct+']':'[GAMEPAD]');
     return;
   }
@@ -627,8 +633,22 @@ document.addEventListener('keydown',function(ev){
     ev.preventDefault();
     if(k==='z'){pianoOct=Math.max(1,pianoOct-1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
     if(k==='x'){pianoOct=Math.min(7,pianoOct+1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
-    if(k===' '){/* space = random even in piano mode */
-      for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;}updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');return;}
+    if(k===' '){/* space = random even in piano mode — update all active notes live */
+      for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;}
+      updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
+      /* update all active piano notes live */
+      var route=rt/100;
+      for(var pk in pianoActive){
+        var n=pianoActive[pk];if(!n)continue;
+        var bf=n.baseFreq,D=bf*4;
+        n.s1.frequency.value=bf*(ops[0].r/10);
+        n.s2.frequency.value=bf*(ops[1].r/10);
+        n.s3.frequency.value=bf*(ops[2].r/10);
+        n.g31.gain.value=(1-route)*(ops[2].l/127)*D;
+        n.g32.gain.value=route*(ops[2].l/127)*D;
+        n.g21.gain.value=(ops[1].l/127)*D;
+      }
+      return;}
     if(PMAP[k]!==undefined&&!pianoActive[k]){pianoActive[k]=fmOn(pFreq(PMAP[k],pianoOct));}
     return;
   }
