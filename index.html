@@ -9,10 +9,10 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#111;display:flex;flex-direction:column;align-items:center;padding:10px;gap:8px;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;}
 #sw{width:100%;max-width:430px;aspect-ratio:4/3;flex-shrink:0;background:#000;border:2px solid #555;display:flex;flex-direction:column;overflow:hidden;}
-.tbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:3px 8px;border-bottom:1px solid #222;flex-shrink:0;}
+.tbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:3px 8px;border-bottom:1px solid #222;flex-shrink:0;height:22px;}
 .tn{font-size:11px;color:#fff;letter-spacing:3px;}
 .tc{font-size:9px;color:#666;letter-spacing:2px;text-align:center;}
-.tr{font-size:7px;color:#888;letter-spacing:1px;text-align:right;line-height:1.5;}
+.tr{font-size:7px;color:#888;letter-spacing:1px;text-align:right;line-height:1.4;overflow:hidden;white-space:nowrap;}
 #pg1{display:flex;flex-direction:column;flex:1;min-height:0;}
 .op-rows{display:flex;flex-direction:column;flex:1;min-height:0;}
 .oprow{display:flex;align-items:center;gap:5px;padding:3px 8px;border-bottom:1px solid #111;background:#000;flex:1;min-height:0;}
@@ -100,7 +100,7 @@ body{background:#111;display:flex;flex-direction:column;align-items:center;paddi
 </head>
 <body>
 <div id="scaler" style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div id="sw">
-  <div class="tbar"><span class="tn" id="ttl">TRIO</span><span class="tc" id="pnm">UNTITLED</span><div class="tr"><div id="sl1">MIDI CH:01</div><div id="sl2"></div></div></div>
+  <div class="tbar"><span class="tn" id="ttl">TRIO</span><span class="tc" id="pnm">UNTITLED</span><div class="tr"><div id="sl1">MIDI CH:01</div></div></div>
   <div id="pg1">
     <div class="op-rows">
       <div class="oprow" id="row2"><span class="op-tag" id="tag2">OP3</span><div class="op-wave"><canvas id="c2"></canvas></div><div class="sq-pair"><div class="sq-unit"><span class="sq-lbl" id="lr2">RT</span><div class="sq" id="sr2"><div class="sq-fill" id="fr2" style="height:37%"></div><span class="sq-num" id="vr2">3.0</span></div></div><div class="sq-unit"><span class="sq-lbl" id="lf2">FB</span><div class="sq" id="sf2"><div class="sq-fill" id="ff2" style="height:0%"></div><span class="sq-num" id="vf2">0</span></div></div></div></div>
@@ -173,16 +173,17 @@ function updateBNote(){
   bNote.s3.frequency.value=bf*(o3.r/10);
   bNote.vol.gain.value=volLevel/100*0.35;
 }
+var msgLock=false;
 function updateMidiStatus(){
-  var scaleInfo=scaleIdx===0?'':(' '+ROOT_NAMES[rootSemi]+' '+SCALES[scaleIdx].name.substring(0,3));
-  if(!heldX&&!heldY)setSt('MIDI CH:'+String(midiCh).padStart(2,'0')+scaleInfo,true,'');
+  if(msgLock)return;
+  var scaleLabel=scaleIdx===0?'CHROM':ROOT_NAMES[rootSemi]+' '+SCALES[scaleIdx].name.substring(0,3).toUpperCase();
+  if(!heldX&&!heldY)setSt(scaleLabel,true);
 }
-function setSt(t,b,t2){
-  var e1=document.getElementById('sl1'),e2=document.getElementById('sl2');
+function setSt(t,b){
+  var e1=document.getElementById('sl1');
   if(e1){e1.textContent=t;e1.style.color=b?'#aaa':'#666';}
-  if(e2)e2.textContent=t2||'';
 }
-function setMsg(m){setSt(m,true,'');clearTimeout(window._st);window._st=setTimeout(updateMidiStatus,1500);}
+function setMsg(m){msgLock=true;setSt(m,true);clearTimeout(window._st);window._st=setTimeout(function(){msgLock=false;updateMidiStatus();},1500);}
 function hint(t){var el=document.getElementById('mhint');if(el)el.textContent=t;}
 function buildPRows(){pRows=[];CATS.forEach(function(_,ci){pRows.push({type:'cat',ci:ci});if(catOpen[ci])for(var si=0;si<8;si++)pRows.push({type:'slot',ci:ci,si:si});});}
 function drawAI(){var r=rt/100,a1=r<=0.5?1:1-(r-0.5)*2,a2=r>=0.5?1:r*2;document.getElementById('ail1').style.opacity=a1*0.85;document.getElementById('ail2').style.opacity=a2*0.85;}
@@ -250,11 +251,13 @@ else if(menuSec===2){
     else{rootSemi=(rootSemi-1+12)%12;}
     _scaleMapCache=null;
     if(scaleIdx!==0){var m=getScaleMap();pitchStep=nearestStepIdx(m,pitchCents);}
+    updateMidiStatus();
   }else if(a==='R'||a==='ri'){
     if(thereminSel===0){scaleIdx=(scaleIdx+1)%SCALES.length;}
     else{rootSemi=(rootSemi+1)%12;}
     _scaleMapCache=null;
     if(scaleIdx!==0){var m=getScaleMap();pitchStep=nearestStepIdx(m,pitchCents);}
+    updateMidiStatus();
   }else if(a==='b'){menuActive=false;thereminSel=0;}
 }
 else{if(a==='up')aboutSel=Math.max(0,aboutSel-1);else if(a==='dn')aboutSel=Math.min(6,aboutSel+1);else if(a==='a'&&aboutSel===6){midiCh=1;pLib=initLib();catOpen=CATS.map(function(){return false;});ops=[{r:10,l:80,f:0,atk:10,dec:30,sus:60,rel:40,label:'CARRIER'},{r:20,l:64,f:12,atk:5,dec:50,sus:40,rel:60,label:'MOD'},{r:30,l:45,f:0,atk:20,dec:20,sus:80,rel:30,label:'MOD'}];rt=50;updSq();setRt(50);drawWaves();curPatchName='UNTITLED';document.getElementById('pnm').textContent='UNTITLED';updateMidiStatus();aboutSel=0;}else if(a==='b')menuActive=false;}}
@@ -264,7 +267,7 @@ function buildPlist(){var pl=document.getElementById('pp');pl.innerHTML='';dKeys
 function adjP(dir){var k=dKeys[curP];ops[sel][k]=Math.max(0,Math.min(dMax[curP],ops[sel][k]+dir*dStep[curP]));buildPlist();setTimeout(drawEnv,10);}
 function flash(id){var el=document.getElementById(id);if(!el)return;el.classList.add('act');setTimeout(function(){el.classList.remove('act');},120);}
 function bind(id,fn){var el=document.getElementById(id);if(!el)return;if(isT){el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();flash(id);fn();},{passive:false});}else{el.addEventListener('click',function(e){e.stopPropagation();flash(id);fn();});}}
-function bHold(id,dn,up){var el=document.getElementById(id);if(!el)return;if(isT){el.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();el.classList.add('held');dn();},{passive:false});el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();el.classList.remove('held');up();},{passive:false});el.addEventListener('touchcancel',function(){el.classList.remove('held');up();});}else{el.addEventListener('mousedown',function(e){e.stopPropagation();el.classList.add('held');dn();});el.addEventListener('mouseup',function(e){e.stopPropagation();el.classList.remove('held');up();});el.addEventListener('mouseleave',function(){el.classList.remove('held');up();});}}
+function bHold(id,dn,up){var el=document.getElementById(id);if(!el)return;if(isT){el.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();el.classList.add('held');dn();},{passive:false});el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();el.classList.remove('held');up();},{passive:false});el.addEventListener('touchcancel',function(){el.classList.remove('held');up();});}else{var isHeld=false;el.addEventListener('mousedown',function(e){e.stopPropagation();isHeld=true;el.classList.add('held');dn();});el.addEventListener('mouseup',function(e){e.stopPropagation();if(isHeld){isHeld=false;el.classList.remove('held');up();}});el.addEventListener('mouseleave',function(){if(isHeld){isHeld=false;el.classList.remove('held');up();}});}}
 /* ── Long-press linear repeat ──────────────────────────────────────
    Each L/R/←/→ button gets a hold timer.
    After HOLD_DELAY ms, fires every HOLD_RATE ms.
@@ -314,9 +317,10 @@ function bHoldRepeat(id,rp){
     el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();el.classList.remove('held');rp.stop();},{passive:false});
     el.addEventListener('touchcancel',function(){el.classList.remove('held');rp.stop();});
   }else{
-    el.addEventListener('mousedown',function(e){e.stopPropagation();el.classList.add('held');flash(id);rp.start();});
-    el.addEventListener('mouseup',function(e){e.stopPropagation();el.classList.remove('held');rp.stop();});
-    el.addEventListener('mouseleave',function(){el.classList.remove('held');rp.stop();});
+    var isHeld=false;
+    el.addEventListener('mousedown',function(e){e.stopPropagation();isHeld=true;el.classList.add('held');flash(id);rp.start();});
+    el.addEventListener('mouseup',function(e){e.stopPropagation();if(isHeld){isHeld=false;el.classList.remove('held');rp.stop();}});
+    el.addEventListener('mouseleave',function(){if(isHeld){isHeld=false;el.classList.remove('held');rp.stop();}});
   }
 }
 bind('bUP',function(){if(pg===1)hlOp(Math.min(2,sel+1));else if(pg===2){curP=Math.max(0,curP-1);buildPlist();setTimeout(drawEnv,10);}else mact('up');});
@@ -389,11 +393,11 @@ function updateScaleDisplay(){
 }
 function cycleScale(){
   scaleIdx=(scaleIdx+1)%SCALES.length;
-  /* snap current pitch to nearest scale degree */
+  _scaleMapCache=null;
   if(scaleIdx!==0){var map=getScaleMap();pitchStep=nearestStepIdx(map,pitchCents);pitchCents=map[pitchStep];}
   updateScaleDisplay();
   updatePitchSlider();
-  setMsg(SCALES[scaleIdx].name);
+  updateMidiStatus();
 }
 
 function pitchFreq(){return 220*Math.pow(2,pitchCents/1200);}
@@ -466,19 +470,20 @@ function bindPitch(id,rp){
     el.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();el.classList.remove('held');rp.stop();},{passive:false});
     el.addEventListener('touchcancel',function(){el.classList.remove('held');rp.stop();});
   }else{
-    el.addEventListener('mousedown',function(e){e.stopPropagation();el.classList.add('held');rp.start();});
-    el.addEventListener('mouseup',function(e){e.stopPropagation();el.classList.remove('held');rp.stop();});
-    el.addEventListener('mouseleave',function(){el.classList.remove('held');rp.stop();});
+    var isHeld=false;
+    el.addEventListener('mousedown',function(e){e.stopPropagation();isHeld=true;el.classList.add('held');rp.start();});
+    el.addEventListener('mouseup',function(e){e.stopPropagation();if(isHeld){isHeld=false;el.classList.remove('held');rp.stop();}});
+    el.addEventListener('mouseleave',function(){if(isHeld){isHeld=false;el.classList.remove('held');rp.stop();}});
   }
 }
 bindPitch('bL2',rpL2);
 bindPitch('bR2',rpR2);
-bHold('bX',function(){heldX=true;heldY=false;document.getElementById('bY').classList.remove('held');if(pg===1)setSt('X+L/R: RATIO INT',false,'X+←→: RATIO DEC');},function(){heldX=false;if(pg===1)updateMidiStatus();});
+bHold('bX',function(){heldX=true;heldY=false;document.getElementById('bY').classList.remove('held');if(pg===1)setSt('X: L/R=RT±1  ◄︎►︎=RT±0.1',false);},function(){heldX=false;if(pg===1)updateMidiStatus();});
 var heldYTimer=null,heldYLong=false;
 bHold('bY',
   function(){
     heldYLong=false;
-    heldYTimer=setTimeout(function(){heldYLong=true;heldY=true;heldX=false;document.getElementById('bX').classList.remove('held');if(pg===1)setSt('Y+L/R: FEEDBACK',false,'');},300);
+    heldYTimer=setTimeout(function(){heldYLong=true;heldY=true;heldX=false;document.getElementById('bX').classList.remove('held');if(pg===1)setSt('Y: L/R=FB',false);},300);
   },
   function(){
     clearTimeout(heldYTimer);
@@ -670,13 +675,13 @@ document.addEventListener('keydown',function(ev){
       document.getElementById('bY').classList.remove('held');
       document.getElementById('bX').classList.add('held');
       heldX=true;heldY=false;
-      if(pg===1)setSt('X+L/R: RATIO INT',false,'X+←→: RATIO DEC');
+      if(pg===1)setSt('X: L/R=RT±1  ◄︎►︎=RT±0.1',false);
       break;
     case'v': /* Y — tap: cycle scale, hold: feedback modifier */
       document.getElementById('bX').classList.remove('held');
       document.getElementById('bY').classList.add('held');
       heldYLong=false;
-      heldYTimer=setTimeout(function(){heldYLong=true;heldY=true;heldX=false;if(pg===1)setSt('Y+L/R: FEEDBACK',false,'');},300);
+      heldYTimer=setTimeout(function(){heldYLong=true;heldY=true;heldX=false;if(pg===1)setSt('Y: L/R=FB',false);},300);
       break;
   }
   /* Repeat keys handled outside switch to support hold */
