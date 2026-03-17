@@ -73,7 +73,10 @@ body{background:#111;display:flex;flex-direction:column;align-items:center;paddi
 .kbk{flex:1;height:14px;display:flex;align-items:center;justify-content:center;font-size:6px;color:#666;border:1px solid #222;}
 .kbk.ks{color:#fff;border-color:#888;background:#0d0d0d;}.kbk.wide{flex:2;}
 .mhint{padding:3px 8px;font-size:6px;color:#333;border-top:1px solid #111;flex-shrink:0;letter-spacing:.5px;}
-#pad{background:#1e1e1e;border:2px solid #2a2a2a;border-radius:14px;width:100%;max-width:430px;padding:8px 12px;display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:8px;}
+#pad{background:#1e1e1e;border:2px solid #2a2a2a;border-radius:14px;width:100%;max-width:430px;padding:6px 12px 10px;display:flex;flex-direction:column;gap:6px;}
+#pad-shoulders{display:flex;justify-content:space-between;gap:8px;}
+#pad-main{display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:8px;}
+.shl{display:flex;gap:6px;}.shr{display:flex;gap:6px;}
 @media(min-width:500px){
   body{height:100vh;justify-content:center;padding:0;overflow:auto;}
   #scaler{transform:scale(1.5);transform-origin:center center;width:430px;}
@@ -82,12 +85,12 @@ body{background:#111;display:flex;flex-direction:column;align-items:center;paddi
 }
 .btn{background:#141414;border:1px solid #2a2a2a;color:#777;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
 .btn:active,.btn.act{background:#444;color:#fff;border-color:#aaa;}.btn.held{background:#252525;color:#ddd;border-color:#666;}
-.shg{display:flex;flex-direction:column;gap:4px;}.ssg{display:flex;flex-direction:column;gap:4px;align-items:center;}
-.lrb{font-size:9px;padding:6px 12px;border-radius:3px;}.ssb{font-size:6px;padding:4px 7px;border-radius:2px;}
-.dpg{display:grid;grid-template-columns:32px 32px 32px;grid-template-rows:32px 32px 32px;gap:2px;}
-.dp{font-size:11px;border-radius:2px;}.de{pointer-events:none;}
-.fg{display:grid;grid-template-columns:32px 32px 32px;grid-template-rows:32px 32px 32px;gap:2px;}
-.fb{font-size:8px;border-radius:50%;}.fe{pointer-events:none;}
+.shg{display:flex;flex-direction:column;gap:4px;}.ssg{display:flex;flex-direction:column;gap:6px;align-items:center;}
+.lrb{font-size:13px;padding:10px 0;border-radius:6px;flex:1;min-width:60px;text-align:center;}.ssb{font-size:10px;padding:8px 14px;border-radius:4px;}
+.dpg{display:grid;grid-template-columns:46px 46px 46px;grid-template-rows:46px 46px 46px;gap:3px;}
+.dp{font-size:16px;border-radius:4px;}.de{pointer-events:none;}
+.fg{display:grid;grid-template-columns:46px 46px 46px;grid-template-rows:46px 46px 46px;gap:3px;}
+.fb{font-size:13px;border-radius:50%;}.fe{pointer-events:none;}
 </style>
 </head>
 <body>
@@ -112,11 +115,15 @@ body{background:#111;display:flex;flex-direction:column;align-items:center;paddi
   </div>
 </div>
 <div id="pad">
-  <div class="shg"><div class="btn lrb" id="bL1">L1</div><div class="btn lrb" id="bL2">L2</div></div>
-  <div class="dpg"><div class="de"></div><div class="btn dp" id="bUP">▲</div><div class="de"></div><div class="btn dp" id="bLE">◀</div><div class="de"></div><div class="btn dp" id="bRI">▶</div><div class="de"></div><div class="btn dp" id="bDN">▼</div><div class="de"></div></div>
-  <div class="ssg"><div class="btn ssb" id="bSEL">SELECT</div><div class="btn ssb" id="bSTA">START</div></div>
-  <div class="fg"><div class="fe"></div><div class="btn fb" id="bY" style="border-color:#554">Y</div><div class="fe"></div><div class="btn fb" id="bX" style="border-color:#335">X</div><div class="fe"></div><div class="btn fb" id="bA" style="border-color:#533">A</div><div class="fe"></div><div class="btn fb" id="bB" style="border-color:#353">B</div><div class="fe"></div></div>
-  <div class="shg"><div class="btn lrb" id="bR1">R1</div><div class="btn lrb" id="bR2">R2</div></div>
+  <div id="pad-shoulders">
+    <div class="shl"><div class="btn lrb" id="bL1">L1</div><div class="btn lrb" id="bL2">L2</div></div>
+    <div class="shr"><div class="btn lrb" id="bR2">R2</div><div class="btn lrb" id="bR1">R1</div></div>
+  </div>
+  <div id="pad-main">
+    <div class="dpg"><div class="de"></div><div class="btn dp" id="bUP">▲</div><div class="de"></div><div class="btn dp" id="bLE">◀</div><div class="de"></div><div class="btn dp" id="bRI">▶</div><div class="de"></div><div class="btn dp" id="bDN">▼</div><div class="de"></div></div>
+    <div class="ssg"><div class="btn ssb" id="bSEL">SELECT</div><div class="btn ssb" id="bSTA">START</div></div>
+    <div class="fg"><div class="fe"></div><div class="btn fb" id="bY" style="border-color:#554">Y</div><div class="fe"></div><div class="btn fb" id="bX" style="border-color:#335">X</div><div class="fe"></div><div class="btn fb" id="bA" style="border-color:#533">A</div><div class="fe"></div><div class="btn fb" id="bB" style="border-color:#353">B</div><div class="fe"></div></div>
+  </div>
 </div>
 </div>
 <script>
