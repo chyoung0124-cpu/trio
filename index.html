@@ -595,16 +595,21 @@ function fmOff(n){
 }
 
 /* B button: hold on pg1 = audition note, B+START = lock/unlock */
-var bNoteLocked=false;
+var bNoteLocked=false,bNoteWantOff=false;
 bHold('bB',
   function(){
     if(pg===1){
       if(bNoteLocked){bNoteLocked=false;fmOff(bNote);bNote=null;updateMidiStatus();}
-      else{fmOff(bNote);bNote=null;fmOn(pitchFreq(),function(n){bNote=n;});}
+      else{fmOff(bNote);bNote=null;bNoteWantOff=false;fmOn(pitchFreq(),function(n){if(bNoteWantOff&&!bNoteLocked){fmOff(n);}else{bNote=n;}});}
     }
   },
   function(){
-    if(pg===1){if(!bNoteLocked){fmOff(bNote);bNote=null;}}
+    if(pg===1){
+      if(!bNoteLocked){
+        if(bNote){fmOff(bNote);bNote=null;}
+        else{bNoteWantOff=true;}
+      }
+    }
     else if(pg===2){showPg(1);}
     else if(pg===3){mact('b');}
   }
@@ -755,7 +760,7 @@ document.addEventListener('keyup',function(ev){
     if(PMAP[k]!==undefined&&pianoActive[k]){fmOff(pianoActive[k]);delete pianoActive[k];}
     return;
   }
-  if(k==='x'&&pg===1){if(!bNoteLocked){fmOff(bNote);bNote=null;}}
+  if(k==='x'&&pg===1){if(!bNoteLocked){if(bNote){fmOff(bNote);bNote=null;}else{bNoteWantOff=true;}}}
   if(k==='arrowleft')rpLE.stop();
   if(k==='arrowright')rpRI.stop();
   if(k==='q')rpL.stop();
