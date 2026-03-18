@@ -350,12 +350,20 @@ var NOTE_NAMES=['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
    pitchStep: current scale degree index (integer), maps to actual cents
    ──────────────────────────────────────────────────────────────── */
 var SCALES=[
-  {name:'CHROMATIC', steps:[1,1,1,1,1,1,1,1,1,1,1,1]},
-  {name:'MAJOR',     steps:[2,2,1,2,2,2,1]},
-  {name:'MINOR',     steps:[2,1,2,2,1,2,2]},
-  {name:'PENTATONIC',steps:[2,2,3,2,3]},
-  {name:'BLUES',     steps:[3,2,1,1,3,2]},
-  {name:'DORIAN',    steps:[2,1,2,2,2,1,2]}
+  {name:'CHROMATIC',  steps:[1,1,1,1,1,1,1,1,1,1,1,1]},
+  {name:'MAJOR',      steps:[2,2,1,2,2,2,1]},
+  {name:'MINOR',      steps:[2,1,2,2,1,2,2]},
+  {name:'PENTATONIC', steps:[2,2,3,2,3]},
+  {name:'BLUES',      steps:[3,2,1,1,3,2]},
+  {name:'DORIAN',     steps:[2,1,2,2,2,1,2]},
+  {name:'PHRYGIAN',   steps:[1,2,2,2,1,2,2]},
+  {name:'HIJAZ',      steps:[2,1,3,1,2,1,2]},
+  {name:'DBL.HARM',   steps:[1,3,1,2,1,3,1]},
+  {name:'EGYPTIAN',   steps:[2,3,2,3,2]},
+  {name:'IN',         steps:[1,4,2,1,4]},
+  {name:'HIRAJOSHI',  steps:[2,1,4,1,4]},
+  {name:'BHAIRAVI',   steps:[1,2,1,2,1,2,3]},
+  {name:'PHRY.DOM',   steps:[1,3,1,2,1,2,2]}
 ];
 var ROOT_NAMES=['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
 var scaleIdx=0,rootSemi=0,pitchStep=0;
