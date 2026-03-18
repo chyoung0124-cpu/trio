@@ -543,8 +543,9 @@ function makeBitCurve(bits){
   return curve;
 }
 function fmOn(freq,cb){
-  initAC().then(function(){
-    var n=_fmOn(freq);if(cb)cb(n);});}
+  if(AC&&AC.state==='running'){var n=_fmOn(freq);if(cb)cb(n);return;}
+  initAC().then(function(){var n=_fmOn(freq);if(cb)cb(n);});
+}
 function _fmOn(freq){
   var now=AC.currentTime;
   /* Small offset: let modulator oscillators spin up before carrier starts,
@@ -600,7 +601,13 @@ bHold('bB',
   function(){
     if(pg===1){
       if(bNoteLocked){bNoteLocked=false;fmOff(bNote);bNote=null;updateMidiStatus();}
-      else{fmOff(bNote);bNote=null;bNoteWantOff=false;fmOn(pitchFreq(),function(n){if(bNoteWantOff&&!bNoteLocked){fmOff(n);}else{bNote=n;}});}
+      else{
+        fmOff(bNote);bNote=null;bNoteWantOff=false;
+        fmOn(pitchFreq(),function(n){
+          if(bNoteWantOff&&!bNoteLocked){fmOff(n);}
+          else{if(bNote)fmOff(bNote);bNote=n;}
+        });
+      }
     }
   },
   function(){
