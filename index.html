@@ -202,9 +202,17 @@ function onMidiMessage(ev){
       var avg=(midiClockTimes[midiClockTimes.length-1]-midiClockTimes[0])/(midiClockTimes.length-1);
       midiClockBPM=Math.round(60000/(avg*24));
     }
-    /* sync autoStep to clock: trigger on every 12 clocks = 8th note */
+    /* sync autoStep to clock with clockOffset:
+       offset 0  = base CLK DIV (e.g. 8th note)
+       offset +1 = 2x faster (half the div)
+       offset +2 = 4x faster
+       offset -1 = 2x slower (double the div)
+       offset -2 = 4x slower */
     if(autoStep&&midiClockSync){
-      midiClockCount=(midiClockCount+1)%midiClockDiv;
+      var effectiveDiv=clockOffset>=0
+        ? Math.max(1,Math.round(midiClockDiv/Math.pow(2,clockOffset)))
+        : Math.round(midiClockDiv*Math.pow(2,-clockOffset));
+      midiClockCount=(midiClockCount+1)%effectiveDiv;
       if(midiClockCount===0)autoStepTick();
     }
     return;
@@ -678,9 +686,11 @@ var rpL2=makePtRepeat(-1),rpR2=makePtRepeat(1);
    ─────────────────────────────────────────────────────────────── */
 var autoStep=false,autoStepTimer=null;
 var AUTO_SPEEDS=[800,500,300,150,80];
-var autoSpeedIdx=2; /* default 300ms */
-var autoDir=1; /* direction inertia */
+var autoSpeedIdx=2; /* default 300ms = middle */
+var clockOffset=0; /* -2 to +2: offset from MIDI clock when CLK SYNC ON */
+var autoDir=1;
 var AUTO_SPD_LABELS=['◄◄◄','◄◄','◄','►','►►'];
+var CLK_OFFSET_LABELS=['CLK-2','CLK-1','CLK','CLK+1','CLK+2'];
 
 function autoStepTick(){
   if(!autoStep)return;
@@ -713,10 +723,11 @@ function autoStepTick(){
 function toggleAutoStep(){
   autoStep=!autoStep;
   if(autoStep){
+    clockOffset=0; /* always start at middle/CLK */
     if(!bNoteLocked&&!bNote){fmOn(pitchFreq(),function(n){bNote=n;});}
     autoDir=Math.random()<0.5?1:-1;
-    autoStepTimer=setTimeout(autoStepTick,AUTO_SPEEDS[autoSpeedIdx]);
-    setSt('AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
+    if(!midiClockSync)autoStepTimer=setTimeout(autoStepTick,AUTO_SPEEDS[autoSpeedIdx]);
+    setSt(midiClockSync?'CLK':'AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
   }else{
     clearTimeout(autoStepTimer);
     if(!bNoteLocked){fmOff(bNote);bNote=null;}
@@ -726,13 +737,23 @@ function toggleAutoStep(){
 
 function autoSpeedDown(){
   if(!autoStep)return;
-  autoSpeedIdx=Math.min(AUTO_SPEEDS.length-1,autoSpeedIdx+1);
-  setSt('AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
+  if(midiClockSync){
+    clockOffset=Math.min(2,clockOffset+1);
+    setSt(CLK_OFFSET_LABELS[clockOffset+2],true);
+  }else{
+    autoSpeedIdx=Math.min(AUTO_SPEEDS.length-1,autoSpeedIdx+1);
+    setSt('AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
+  }
 }
 function autoSpeedUp(){
   if(!autoStep)return;
-  autoSpeedIdx=Math.max(0,autoSpeedIdx-1);
-  setSt('AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
+  if(midiClockSync){
+    clockOffset=Math.max(-2,clockOffset-1);
+    setSt(CLK_OFFSET_LABELS[clockOffset+2],true);
+  }else{
+    autoSpeedIdx=Math.max(0,autoSpeedIdx-1);
+    setSt('AUTO '+AUTO_SPD_LABELS[autoSpeedIdx],true);
+  }
 }
 bHoldRepeat('bL1',rpL);
 bHoldRepeat('bR1',rpR);
