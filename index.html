@@ -792,10 +792,9 @@ bHold('bY',
     if(pg===3)mact('y');
   }
 );
-var heldA=false;
 function randomOp(i){
   ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);
-  if(i!==0)ops[i].l=Math.floor(Math.random()*90)+20; /* skip OP1 level */
+  if(i!==0)ops[i].l=Math.floor(Math.random()*90)+20;
   ops[i].f=Math.floor(Math.random()*40);
   ops[i].atk=Math.floor(Math.random()*60)+2;
   ops[i].dec=Math.floor(Math.random()*60)+5;
@@ -803,15 +802,6 @@ function randomOp(i){
   ops[i].rel=Math.floor(Math.random()*60)+5;
   ops[i].br=Math.floor(Math.random()*BR_STEPS.length);
 }
-bHold('bA',
-  function(){if(pg===1)heldA=true;else if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}else if(pg===3)mact('a');},
-  function(){
-    if(pg===1&&heldA){heldA=false;return;}
-    heldA=false;
-    if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}
-    else if(pg===3)mact('a');
-  }
-);
 bind('bSTA',function(){
   if(pg===1){
     if(bNote&&!bNoteLocked){bNoteLocked=true;setSt('LOCK',true);return;}
@@ -819,12 +809,18 @@ bind('bSTA',function(){
     showPg(3);
   }else if(pg===3)mact('start');
 });
+bind('bA',function(){
+  if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}
+  else if(pg===3)mact('a');
+});
 bind('bSEL',function(){
   if(pg===1){
     if(heldY){toggleAutoStep();return;}
-    if(heldA){randomOp(sel);updSq();drawWaves();setMsg('RND OP'+(sel+1));return;}
     for(var i=0;i<3;i++)randomOp(i);
     updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
+  }else if(pg===2){
+    /* A+SELECT in envelope page = random current OP */
+    randomOp(sel);updSq();drawWaves();buildPlist();setTimeout(drawEnv,10);setMsg('RND OP'+(sel+1));
   }
 });
 setTimeout(function(){drawWaves();updSq();setRt(50);hlOp(0);drawAI();updateMidiStatus();updatePitchSlider();updateScaleDisplay();initMidi();},50);
@@ -1089,6 +1085,8 @@ document.addEventListener('keydown',function(ev){
         if(heldY){toggleAutoStep();break;}
         for(var i=0;i<3;i++)randomOp(i);
         updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
+      }else if(pg===2){
+        randomOp(sel);updSq();drawWaves();buildPlist();setTimeout(drawEnv,10);setMsg('RND OP'+(sel+1));
       }
       break;
     case'z': /* A button */
