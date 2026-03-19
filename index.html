@@ -821,6 +821,7 @@ function autoStepTick(){
     updatePitchSlider();
     fmOn(pitchFreq(),function(n){bNote=n;});
   }
+  clearTimeout(autoStepTimer);
   autoStepTimer=setTimeout(autoStepTick,AUTO_SPEEDS[autoSpeedIdx]);
 }
 
@@ -1050,8 +1051,24 @@ function fmOff(n){
   n.env.gain.linearRampToValueAtTime(0,now+n.rl);
   if(n.env2){n.env2.gain.cancelScheduledValues(now);n.env2.gain.setValueAtTime(n.env2.gain.value,now);n.env2.gain.linearRampToValueAtTime(0,now+n.rl2);}
   if(n.env3){n.env3.gain.cancelScheduledValues(now);n.env3.gain.setValueAtTime(n.env3.gain.value,now);n.env3.gain.linearRampToValueAtTime(0,now+n.rl3);}
-  var t=now+Math.max(n.rl,n.rl2||0,n.rl3||0)+0.1;
-  n.s1.stop(t);n.s2.stop(t);n.s3.stop(t);
+  var maxRl=Math.max(n.rl,n.rl2||0,n.rl3||0);
+  var t=now+maxRl+0.1;
+  try{n.s1.stop(t);n.s2.stop(t);n.s3.stop(t);}catch(e){}
+  /* disconnect all nodes after release completes — allows GC to reclaim memory */
+  var _n=n;
+  setTimeout(function(){
+    try{
+      _n.s1.disconnect();_n.s2.disconnect();_n.s3.disconnect();
+      _n.env.disconnect();_n.vol.disconnect();
+      _n.g31.disconnect();_n.g32.disconnect();_n.g21.disconnect();
+      if(_n.env2)_n.env2.disconnect();
+      if(_n.env3)_n.env3.disconnect();
+      if(_n.bc1)_n.bc1.disconnect();
+      if(_n.bc2)_n.bc2.disconnect();
+      if(_n.bc3)_n.bc3.disconnect();
+      if(_n.lpf)_n.lpf.disconnect();
+    }catch(e){}
+  },(maxRl+0.2)*1000);
 }
 
 /* B button: hold on pg1 = audition note, B+START = lock/unlock */
