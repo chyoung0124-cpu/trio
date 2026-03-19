@@ -170,7 +170,7 @@ var midiNoteOn={}; /* active MIDI notes: note# → fmOn result */
 var CC_MAP=[
   {cc:1,  label:'ROUTE',      apply:function(v){setRt(Math.round(v/127*100));}},
   {cc:7,  label:'VOLUME',     apply:function(v){volLevel=Math.round(v/127*100);}},
-  {cc:14, label:'OP1 LEVEL',  apply:function(v){ops[0].l=v;updSq();drawWaves();}},
+  {cc:14, label:'OP1 LEVEL',  apply:function(v){volLevel=Math.round(v/127*100);updateBNote();drawWaves();}},
   {cc:15, label:'OP2 LEVEL',  apply:function(v){ops[1].l=v;updSq();drawWaves();}},
   {cc:16, label:'OP3 LEVEL',  apply:function(v){ops[2].l=v;updSq();drawWaves();}},
   {cc:17, label:'OP1 RATIO',  apply:function(v){ops[0].r=Math.max(10,Math.min(80,Math.round(v/127*70)+10));updSq();drawWaves();}},
@@ -313,7 +313,7 @@ function updateNote(n){
   n.s1.frequency.value=bf*(o1.r/10);
   n.s2.frequency.value=bf*(o2.r/10);
   n.s3.frequency.value=bf*(o3.r/10);
-  n.vol.gain.value=(volLevel/100)*(o1.l/127)*0.5;
+  n.vol.gain.value=volLevel/100*0.5;
   if(n.bc1)n.bc1.curve=makeBitCurve(brVal(o1));
   if(n.bc2)n.bc2.curve=makeBitCurve(brVal(o2));
   if(n.bc3)n.bc3.curve=makeBitCurve(brVal(o3));
@@ -333,7 +333,7 @@ function hint(t){var el=document.getElementById('mhint');if(el)el.textContent=t;
 function buildPRows(){pRows=[];CATS.forEach(function(_,ci){pRows.push({type:'cat',ci:ci});if(catOpen[ci])for(var si=0;si<8;si++)pRows.push({type:'slot',ci:ci,si:si});});}
 function drawAI(){var r=rt/100,a1=r<=0.5?1:1-(r-0.5)*2,a2=r>=0.5?1:r*2;document.getElementById('ail1').style.opacity=a1*0.85;document.getElementById('ail2').style.opacity=a2*0.85;}
 function setupC(c,w,h){c.width=Math.round(w*DPR);c.height=Math.round(h*DPR);c.style.width=w+'px';c.style.height=h+'px';var ctx=c.getContext('2d');ctx.scale(DPR,DPR);return ctx;}
-function drawWave(ctx,idx,w,h){ctx.clearRect(0,0,w,h);var mid=h/2,amp=mid-2;ctx.strokeStyle=idx===0?'#fff':(idx===sel?'#bbb':'#555');ctx.lineWidth=1/DPR;ctx.beginPath();var r=rt/100,p3=0,p2=0,p1=0;function qtz(v,bits){if(bits>=16)return v;var steps=Math.pow(2,bits)-1;return Math.round(v*steps)/steps;}for(var x=0;x<w;x++){var t=x/w;var s3=Math.sin(2*Math.PI*rV(ops[2])*t+p3*(ops[2].f/64)*Math.PI);s3=qtz(s3,brVal(ops[2]));p3=s3;var s2=Math.sin(2*Math.PI*rV(ops[1])*t+s3*(ops[2].l/127)*r*3+p2*(ops[1].f/64)*Math.PI);s2=qtz(s2,brVal(ops[1]));p2=s2;var s1=Math.sin(2*Math.PI*rV(ops[0])*t+s2*(ops[1].l/127)*3+(1-r)*s3*(ops[2].l/127)*3+Math.atan(p1*(ops[0].f/64)*2.5));s1=qtz(s1,brVal(ops[0]));p1=s1;var v=[s1,s2,s3][idx];var lvAmp=amp*(ops[idx].l/127);x===0?ctx.moveTo(x,mid-v*lvAmp):ctx.lineTo(x,mid-v*lvAmp);}ctx.stroke();}
+function drawWave(ctx,idx,w,h){ctx.clearRect(0,0,w,h);var mid=h/2,amp=mid-2;ctx.strokeStyle=idx===0?'#fff':(idx===sel?'#bbb':'#555');ctx.lineWidth=1/DPR;ctx.beginPath();var r=rt/100,p3=0,p2=0,p1=0;function qtz(v,bits){if(bits>=16)return v;var steps=Math.pow(2,bits)-1;return Math.round(v*steps)/steps;}for(var x=0;x<w;x++){var t=x/w;var s3=Math.sin(2*Math.PI*rV(ops[2])*t+p3*(ops[2].f/64)*Math.PI);s3=qtz(s3,brVal(ops[2]));p3=s3;var s2=Math.sin(2*Math.PI*rV(ops[1])*t+s3*(ops[2].l/127)*r*3+p2*(ops[1].f/64)*Math.PI);s2=qtz(s2,brVal(ops[1]));p2=s2;var s1=Math.sin(2*Math.PI*rV(ops[0])*t+s2*(ops[1].l/127)*3+(1-r)*s3*(ops[2].l/127)*3+Math.atan(p1*(ops[0].f/64)*2.5));s1=qtz(s1,brVal(ops[0]));p1=s1;var v=[s1,s2,s3][idx];var lvAmp=idx===0?amp*(volLevel/100):amp*(ops[idx].l/127);x===0?ctx.moveTo(x,mid-v*lvAmp):ctx.lineTo(x,mid-v*lvAmp);}ctx.stroke();}
 function drawWaves(){for(var i=0;i<3;i++){var c=document.getElementById('c'+i);if(!c)continue;var ww=document.getElementById('row'+i).querySelector('.op-wave');var cW=ww.offsetWidth||200,cH=ww.offsetHeight||20;if(cH<4)cH=20;var ctx=setupC(c,cW,cH);drawWave(ctx,i,cW,cH);}}
 function drawEnv(){var panel=document.getElementById('ep'),c=document.getElementById('ec');if(!panel||!c)return;var pW=panel.offsetWidth,pH=panel.offsetHeight;if(!pW||!pH){pW=300;pH=150;}c.style.left='0px';c.style.top='0px';var ctx=setupC(c,pW,pH);ctx.clearRect(0,0,pW,pH);var o=ops[sel],px=10,pt=10,pb=12,uw=pW-px*2,uh=pH-pt-pb;var eH=Math.round(uh*0.5),eT=pt+Math.round((uh-eH)/2),eB=eT+eH;var aZ=uw*0.75,rZ=uw*0.25,aT=o.atk+o.dec+60;var aw=o.atk/aT*aZ,dw=Math.max(6,o.dec/aT*aZ),rw=(o.rel/100)*rZ;var sL=0.15+(o.sus/100)*0.70,sy=eB-Math.round(eH*sL),x0=px,sX=px+aZ;var pts=[[x0,eB],[x0+aw,eT],[x0+aw+dw,sy],[sX,sy],[sX+rw,eB]];ctx.fillStyle='#111';ctx.beginPath();pts.forEach(function(p,i){i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);});ctx.lineTo(pts[4][0],eB);ctx.lineTo(x0,eB);ctx.closePath();ctx.fill();[[0,1],[1,2],[2,3],[3,4]].forEach(function(s,i){var hi=(curP===i);ctx.strokeStyle=hi?'#fff':'#666';ctx.lineWidth=hi?1.5/DPR:1/DPR;ctx.beginPath();ctx.moveTo(pts[s[0]][0],pts[s[0]][1]);ctx.lineTo(pts[s[1]][0],pts[s[1]][1]);ctx.stroke();});pts.forEach(function(p){ctx.fillStyle='#fff';ctx.fillRect(p[0]-2,p[1]-2,4,4);});var lY=pH-3,sW=uw/4;ctx.font='6px sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';['A','D','S','R'].forEach(function(l,i){ctx.fillStyle=(curP===i)?'#fff':'#444';ctx.fillText(l,px+sW*i+sW/2,lY);});}
 function updSq(){for(var i=0;i<3;i++){document.getElementById('fr'+i).style.height=Math.round(ops[i].r/80*100)+'%';document.getElementById('vr'+i).textContent=fR(ops[i]);document.getElementById('ff'+i).style.height=Math.round(ops[i].f/64*100)+'%';document.getElementById('vf'+i).textContent=ops[i].f;}updateBNote();}
@@ -486,7 +486,7 @@ function doLE(){
   if(pg===1){
     if(heldX){ops[sel].r=Math.max(10,ops[sel].r-1);updSq();drawWaves();setMsg('OP'+(sel+1)+' RT:'+fR(ops[sel]));}
     else if(heldY){ops[sel].br=Math.max(0,ops[sel].br-1);updateBNote();drawWaves();setMsg('OP'+(sel+1)+' BR:'+brVal(ops[sel]));}
-    else{ops[sel].l=Math.max(0,ops[sel].l-8);updSq();drawWaves();setMsg('OP'+(sel+1)+' LV:'+ops[sel].l);}
+    else if(sel!==0){ops[sel].l=Math.max(0,ops[sel].l-8);updSq();drawWaves();setMsg('OP'+(sel+1)+' LV:'+ops[sel].l);}
   }else if(pg===2)adjP(-1);else mact('le');
 }
 function doRI(){
@@ -494,7 +494,7 @@ function doRI(){
   if(pg===1){
     if(heldX){ops[sel].r=Math.min(80,ops[sel].r+1);updSq();drawWaves();setMsg('OP'+(sel+1)+' RT:'+fR(ops[sel]));}
     else if(heldY){ops[sel].br=Math.min(BR_STEPS.length-1,ops[sel].br+1);updateBNote();drawWaves();setMsg('OP'+(sel+1)+' BR:'+brVal(ops[sel]));}
-    else{ops[sel].l=Math.min(127,ops[sel].l+8);updSq();drawWaves();setMsg('OP'+(sel+1)+' LV:'+ops[sel].l);}
+    else if(sel!==0){ops[sel].l=Math.min(127,ops[sel].l+8);updSq();drawWaves();setMsg('OP'+(sel+1)+' LV:'+ops[sel].l);}
   }else if(pg===2)adjP(1);else mact('ri');
 }
 function doL(){
@@ -792,7 +792,26 @@ bHold('bY',
     if(pg===3)mact('y');
   }
 );
-bind('bA',function(){if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}else if(pg===3)mact('a');});
+var heldA=false;
+function randomOp(i){
+  ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);
+  if(i!==0)ops[i].l=Math.floor(Math.random()*90)+20; /* skip OP1 level */
+  ops[i].f=Math.floor(Math.random()*40);
+  ops[i].atk=Math.floor(Math.random()*60)+2;
+  ops[i].dec=Math.floor(Math.random()*60)+5;
+  ops[i].sus=Math.floor(Math.random()*80)+10;
+  ops[i].rel=Math.floor(Math.random()*60)+5;
+  ops[i].br=Math.floor(Math.random()*BR_STEPS.length);
+}
+bHold('bA',
+  function(){if(pg===1)heldA=true;else if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}else if(pg===3)mact('a');},
+  function(){
+    if(pg===1&&heldA){heldA=false;return;}
+    heldA=false;
+    if(pg===1){curP=0;document.getElementById('s2t').textContent='OP '+(sel+1);document.getElementById('s2s').textContent=ops[sel].label;showPg(2);}
+    else if(pg===3)mact('a');
+  }
+);
 bind('bSTA',function(){
   if(pg===1){
     if(bNote&&!bNoteLocked){bNoteLocked=true;setSt('LOCK',true);return;}
@@ -803,7 +822,8 @@ bind('bSTA',function(){
 bind('bSEL',function(){
   if(pg===1){
     if(heldY){toggleAutoStep();return;}
-    for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;ops[i].br=Math.floor(Math.random()*BR_STEPS.length);}
+    if(heldA){randomOp(sel);updSq();drawWaves();setMsg('RND OP'+(sel+1));return;}
+    for(var i=0;i<3;i++)randomOp(i);
     updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
   }
 });
@@ -879,7 +899,7 @@ function _fmOn(freq){
   g32.gain.value=route*(o3.l/127)*D;
   g21.gain.value=(o2.l/127)*D;
   /* OP1 level now controls output volume */
-  vol.gain.value=(volLevel/100)*(o1.l/127)*0.5;
+  vol.gain.value=volLevel/100*0.5;
 
   /* OP1 carrier envelope — Digitone-style curves */
   /* Attack: log but minimum 8ms, silky not hard */
@@ -1022,7 +1042,7 @@ document.addEventListener('keydown',function(ev){
     if(k==='z'){pianoOct=Math.max(1,pianoOct-1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
     if(k==='x'){pianoOct=Math.min(7,pianoOct+1);setMsg('[PIANO OCT:'+pianoOct+']');return;}
     if(k===' '){/* space = random even in piano mode — update all active notes live */
-      for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;ops[i].br=Math.floor(Math.random()*BR_STEPS.length);}
+      for(var i=0;i<3;i++)randomOp(i);
       updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
       /* update all active piano notes live */
       var route=rt/100;
@@ -1067,7 +1087,7 @@ document.addEventListener('keydown',function(ev){
       ev.preventDefault();flash('bSEL');
       if(pg===1){
         if(heldY){toggleAutoStep();break;}
-        for(var i=0;i<3;i++){ops[i].r=(Math.floor(Math.random()*7)+1)*10+Math.floor(Math.random()*10);ops[i].l=Math.floor(Math.random()*90)+20;ops[i].f=Math.floor(Math.random()*40);ops[i].atk=Math.floor(Math.random()*60)+2;ops[i].dec=Math.floor(Math.random()*60)+5;ops[i].sus=Math.floor(Math.random()*80)+10;ops[i].rel=Math.floor(Math.random()*60)+5;ops[i].br=Math.floor(Math.random()*BR_STEPS.length);}
+        for(var i=0;i<3;i++)randomOp(i);
         updSq();setRt(Math.floor(Math.random()*100));setMsg('RANDOM');
       }
       break;
