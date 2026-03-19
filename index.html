@@ -303,14 +303,17 @@ function updateBNote(){
 function updateNote(n){
   if(!n||!AC)return;
   var o1=ops[0],o2=ops[1],o3=ops[2],route=rt/100;
-  var bf=n.baseFreq,D=bf*4;
+  var bf=n.baseFreq;
+  var D_BASE=440*4;
+  var bassBoost=Math.max(1.0,Math.pow(440/Math.max(bf,20),0.4));
+  var D=D_BASE*bassBoost;
   n.g31.gain.value=(1-route)*(o3.l/127)*D;
   n.g32.gain.value=route*(o3.l/127)*D;
   n.g21.gain.value=(o2.l/127)*D;
   n.s1.frequency.value=bf*(o1.r/10);
   n.s2.frequency.value=bf*(o2.r/10);
   n.s3.frequency.value=bf*(o3.r/10);
-  n.vol.gain.value=volLevel/100*0.35;
+  n.vol.gain.value=(volLevel/100)*(o1.l/127)*0.5;
   if(n.bc1)n.bc1.curve=makeBitCurve(brVal(o1));
   if(n.bc2)n.bc2.curve=makeBitCurve(brVal(o2));
   if(n.bc3)n.bc3.curve=makeBitCurve(brVal(o3));
@@ -866,12 +869,17 @@ function _fmOn(freq){
   s2.frequency.value=f2;
   s3.frequency.value=f3;
   s1.type=s2.type=s3.type='sine';
-  var D=freq*4;
-  /* OP levels now go through env2/env3, peak at 1 then decay to sustain */
+  /* Fixed modulation index: D_BASE constant (440Hz reference), not proportional to freq.
+     Bass compensation: boost modulation for frequencies below 440Hz so bass sounds full.
+     Factor (440/freq)^0.4 gives gentle boost — C2=×1.74, C3=×1.32, C4=×1.0, C5=×0.76 */
+  var D_BASE=440*4;
+  var bassBoost=Math.max(1.0,Math.pow(440/Math.max(freq,20),0.4));
+  var D=D_BASE*bassBoost;
   g31.gain.value=(1-route)*(o3.l/127)*D;
   g32.gain.value=route*(o3.l/127)*D;
   g21.gain.value=(o2.l/127)*D;
-  vol.gain.value=volLevel/100*0.35;
+  /* OP1 level now controls output volume */
+  vol.gain.value=(volLevel/100)*(o1.l/127)*0.5;
 
   /* OP1 carrier envelope — Digitone-style curves */
   /* Attack: log but minimum 8ms, silky not hard */
