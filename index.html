@@ -873,29 +873,33 @@ function _fmOn(freq){
   g21.gain.value=(o2.l/127)*D;
   vol.gain.value=volLevel/100*0.35;
 
-  /* OP1 carrier envelope — log time */
-  var at1=adsrTime(o1.atk,0.001,0.5);
-  var dc1=adsrTime(o1.dec,0.005,0.8);
-  var su1=o1.sus/100;
-  var rl1=adsrTime(o1.rel,0.005,2.0);
+  /* OP1 carrier envelope — Digitone-style curves */
+  /* Attack: log but minimum 8ms, silky not hard */
+  var at1=0.008*Math.pow(125,o1.atk/100);
+  /* Decay: gentler slope, mid-range most useful for pads */
+  var dc1=0.02*Math.pow(100,o1.dec/100);
+  /* Sustain: softer power curve (1.4) — more energy retained at low values */
+  var su1=Math.pow(o1.sus/100,1.4);
+  /* Release: long breathing feel, min 20ms */
+  var rl1=0.02*Math.pow(200,o1.rel/100);
   env.gain.setValueAtTime(0,startCarrier);
   env.gain.linearRampToValueAtTime(1,startCarrier+at1);
   env.gain.linearRampToValueAtTime(su1,startCarrier+at1+dc1);
 
   /* OP2 modulator envelope */
-  var at2=adsrTime(o2.atk,0.001,0.5);
-  var dc2=adsrTime(o2.dec,0.005,0.8);
-  var su2=o2.sus/100;
-  var rl2=adsrTime(o2.rel,0.005,2.0);
+  var at2=0.008*Math.pow(125,o2.atk/100);
+  var dc2=0.02*Math.pow(100,o2.dec/100);
+  var su2=Math.pow(o2.sus/100,1.4);
+  var rl2=0.02*Math.pow(200,o2.rel/100);
   env2.gain.setValueAtTime(0,startMod);
   env2.gain.linearRampToValueAtTime(1,startMod+at2);
   env2.gain.linearRampToValueAtTime(su2,startMod+at2+dc2);
 
   /* OP3 modulator envelope */
-  var at3=adsrTime(o3.atk,0.001,0.5);
-  var dc3=adsrTime(o3.dec,0.005,0.8);
-  var su3=o3.sus/100;
-  var rl3=adsrTime(o3.rel,0.005,2.0);
+  var at3=0.008*Math.pow(125,o3.atk/100);
+  var dc3=0.02*Math.pow(100,o3.dec/100);
+  var su3=Math.pow(o3.sus/100,1.4);
+  var rl3=0.02*Math.pow(200,o3.rel/100);
   env3.gain.setValueAtTime(0,startMod);
   env3.gain.linearRampToValueAtTime(1,startMod+at3);
   env3.gain.linearRampToValueAtTime(su3,startMod+at3+dc3);
