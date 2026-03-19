@@ -537,16 +537,20 @@ function drawFilterCurve(ctx,w,h){
   cx=Math.max(2,Math.min(w-2,cx));
   var cutGain=1/Math.sqrt(2);
   var cy=(h-4)-(h-8)*cutGain;
-  /* smooth curve */
-  ctx.strokeStyle='#fff';
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  for(var x=0;x<w;x++){
-    var freq=fMin*Math.pow(fMax/fMin,x/w);
+  /* log-spaced frequency samples → pixel coords for smooth curve at all cutoffs */
+  var samples=w*2; /* oversample for smoothness */
+  var pts=[];
+  for(var i=0;i<=samples;i++){
+    var freq=fMin*Math.pow(fMax/fMin,i/samples);
     var gain=1/Math.sqrt(1+Math.pow(freq/cutoff,2));
+    var x=Math.log(freq/fMin)/Math.log(fMax/fMin)*w;
     var y=(h-4)-(h-8)*gain;
-    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    pts.push([x,y]);
   }
+  ctx.strokeStyle='#fff';
+  ctx.lineWidth=1/DPR;
+  ctx.beginPath();
+  pts.forEach(function(p,i){i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]);});
   ctx.stroke();
   /* circle at -3dB point */
   ctx.beginPath();
